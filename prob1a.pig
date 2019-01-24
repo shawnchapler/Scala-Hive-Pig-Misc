@@ -1,0 +1,15 @@
+oshweath = LOAD 'hdfs:/home/ubuntu/final/Oshkosh/OshkoshWeather.csv' USING PigStorage(',');
+osh_f = FILTER oshweath BY $1 > 0 AND $4 != '-9999' and $4 IS NOT NULL;
+osh_c = FOREACH osh_f GENERATE CONCAT($0, $1, $2) AS date, $4 AS temp;
+osh_f_hot = FILTER osh_c BY temp >= 95; 
+osh_g_hot = GROUP osh_f_hot BY date;
+osh_hot_days = FOREACH osh_g_hot GENERATE group AS date, 1 AS one;
+osh_hot_days_g = GROUP osh_hot_days ALL;
+osh_hot_days_count = FOREACH osh_hot_days_g GENERATE SUM(osh_hot_days.one), 'hot' AS daytype;
+osh_f_cold = FILTER osh_c BY temp <= -10;
+osh_g_cold = GROUP osh_f_cold BY date;
+osh_cold_days = FOREACH osh_g_cold GENERATE group AS date, 1 AS one;
+osh_cold_days_g = GROUP osh_cold_days ALL;
+osh_cold_days_count = FOREACH osh_cold_days_g GENERATE SUM(osh_cold_days.one), 'cold' AS daytype;
+final = UNION osh_hot_days_count, osh_cold_days_count;
+DUMP final;

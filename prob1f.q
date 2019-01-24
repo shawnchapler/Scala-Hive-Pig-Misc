@@ -1,0 +1,16 @@
+DROP TABLE IF EXISTS oshkoshweather;
+CREATE EXTERNAL TABLE IF NOT EXISTS oshkoshweather(year INT, month INT, day INT, timecst STRING, tempf FLOAT, dewpointf FLOAT, humidity FLOAT, sealvlpressin FLOAT, vismph FLOAT, windir STRING, windspeedmph FLOAT, gustspeedmph FLOAT, precipin STRING, events STRING, conditions STRING, winddirdegrees FLOAT) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' LOCATION 'hdfs:/home/ubuntu/final/Oshkosh';
+DROP VIEW IF EXISTS avghrtemposh;
+CREATE VIEW avghrtemposh AS SELECT month, AVG(tempf) as avgtemp, (AVG(tempf))-50 AS optdiff, split(timecst,':')[0] AS hour, split(timecst,' ')[1] AS ampm, 'oshkosh' AS cityid FROM oshkoshweather WHERE tempf<>-9999 AND tempf IS NOT NULL GROUP BY month, split(timecst, ':')[0], split(timecst, ' ')[1];
+DROP VIEW IF EXISTS avghrwindosh;
+CREATE VIEW avghrwindosh AS Select month, AVG(windspeedmph) AS avgwind, split(timecst, ':')[0] AS hour, split(timecst,' ')[1] AS ampm, 'oshkosh' AS cityid FROM oshkoshweather WHERE windspeedmph<>-9999 AND windspeedmph IS NOT NULL GROUP BY month, split(timecst, ':')[0],split(timecst,' ')[1];
+DROP TABLE IF EXISTS iowacity;
+CREATE EXTERNAL TABLE IF NOT EXISTS iowacityweather(year INT, month INT, day INT, timecst STRING, tempf FLOAT, dewpointf FLOAT, humidity FLOAT, sealvlpressin FLOAT, vismph FLOAT, windir STRING, windspeedmph FLOAT, gustspeedmph FLOAT, precipin STRING, events STRING, conditions STRING, winddirdegrees FLOAT) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' LOCATION 'hdfs:/home/ubuntu/final/IowaCity';
+DROP VIEW IF EXISTS avghrtempic;
+CREATE VIEW avghrtempic AS SELECT month, AVG(tempf) as avgtemp, (AVG(tempf))-50 AS optdiff, split(timecst,':')[0] AS hour, split(timecst,' ')[1] AS ampm, 'iowacity' AS cityid FROM iowacityweather WHERE tempf<>-9999 AND tempf IS NOT NULL GROUP BY month, split(timecst, ':')[0], split(timecst, ' ')[1];
+DROP VIEW IF EXISTS avghrwindic;
+CREATE VIEW avghrwindic AS Select month, AVG(windspeedmph) AS avgwind, split(timecst, ':')[0] AS hour, split(timecst,' ')[1] AS ampm, 'iowacity' AS cityid FROM iowacityweather WHERE windspeedmph<>-9999 AND windspeedmph IS NOT NULL GROUP BY month, split(timecst, ':')[0],split(timecst,' ')[1];
+DROP VIEW IF EXISTS besthours;
+CREATE VIEW besthours AS Select o.month, o.drank, o.cityid,o.hour, o.ampm, o.diff, o.avgwind FROM (SELECT t.cityid, t.month, t.hour, t.ampm, abs(t.optdiff) AS diff, DENSE_RANK() OVER (PARTITION BY t.month ORDER BY abs(t.optdiff)ASC) AS drank, t.avgtemp, w.avgwind FROM avghrtemposh t JOIN avghrwindosh w ON t.month=w.month AND t.hour=w.hour AND t.ampm = w.ampm ORDER BY month ASC, diff ASC)o WHERE o.drank=1 UNION
+Select o.month, o.drank, o.cityid, o.hour, o.ampm, o.diff, o.avgwind FROM (SELECT t.cityid, t.month, t.hour, t.ampm, abs(t.optdiff) AS diff, DENSE_RANK() OVER (PARTITION BY t.month ORDER BY abs(t.optdiff)ASC) AS drank, t.avgtemp, w.avgwind FROM avghrtempic t JOIN avghrwindic w ON t.month=w.month AND t.hour=w.hour AND t.ampm = w.ampm ORDER BY month ASC, diff ASC)o WHERE o.drank=1;
+Select month, hour, ampm, cityid from (Select month, hour, ampm, cityid, DENSE_RANK() OVER (PARTITION BY month ORDER BY diff, avgwind asc) as drank from besthours)x where drank = 1;

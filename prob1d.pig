@@ -1,0 +1,20 @@
+oshweath = LOAD 'hdfs:/home/ubuntu/final/Oshkosh/OshkoshWeather.csv' USING PigStorage(',');
+osh_f = FILTER oshweath BY $1 > 0 AND $4 != '-9999' AND $4 IS NOT NULL;
+osh_c = FOREACH osh_f GENERATE CONCAT ($0, '/',$1,'/',$2,' ',$3) AS date_time, CONCAT($0,$1,$2) AS date, (double)$4 AS temp:double, (double)1 AS one:double;
+todate_osh_c = FOREACH osh_c GENERATE ToDate($0, 'yyyy/MM/dd hh:mm aa') AS newdate, date AS date, temp AS temp, one AS one;
+osh_data = FOREACH todate_osh_c GENERATE date AS date, temp AS temp, one AS one, GetHour(newdate) AS hour;
+osh_data_g = GROUP osh_data BY (date, hour);
+osh_avg_temp_day_hour = FOREACH osh_data_g GENERATE group AS datehour, AVG(osh_data.temp) AS avgtemp;
+osh_temp_by_day = FOREACH osh_avg_temp_day_hour GENERATE FLATTEN(datehour), avgtemp AS avgtemp;
+osh_temp_by_day_clean = FOREACH osh_temp_by_day GENERATE (chararray)date AS date:chararray, (int)hour AS hour:int, avgtemp AS avgtemp;
+osh_temp_by_day_g = GROUP osh_temp_by_day_clean BY date;
+osh_temp_by_day_min = FOREACH osh_temp_by_day_g GENERATE group AS date, MIN(osh_temp_by_day_clean.avgtemp) AS minavgtemp;
+osh_temp_self_join = JOIN osh_temp_by_day_min BY (date, minavgtemp), osh_temp_by_day_clean BY (date, avgtemp);
+osh_min_temp_sum = FOREACH osh_temp_self_join GENERATE $0  AS date, $3 AS hour;
+osh_min_day_group = GROUP osh_min_temp_sum BY hour;
+osh_min_day_temp_day_count = FOREACH osh_min_day_group GENERATE group AS hour, COUNT(osh_min_temp_sum) AS countofdays;
+rank_order = RANK osh_min_day_temp_day_count BY countofdays DESC DENSE;
+final = FILTER rank_order BY rank_osh_min_day_temp_day_count == 1;
+final_hour = FOREACH final GENERATE hour;
+DUMP final_hour;
+
