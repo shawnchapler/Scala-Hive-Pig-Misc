@@ -1,0 +1,101 @@
+DS730 Final Question 3
+
+1) Source of Race Data:  http://academictorrents.com/details/2269d7d1c77375aea732eea0905e370d4741575f/tech
+Filename - Race-Results.zip
+   Source of Census Name Data:  http://deron.meranda.us/data/
+   Filename:  census-dist-female-first.txt
+              census-dist-male-first.txt
+2) Questions asked of Data:
+   I reviewed Ironman Hawaii results from 2003 through 2015 which were all independent files.  Unfortunately, the data did not contain gender nor valid ages.  Ages appear to have been scrapped from the web at the time the files were compiled.
+   
+   First Question/Data Clean-Up - Gender Assignment
+   1)I downloaded two files of first names, male and female, obtained from the 1990 US census file.  Names were ranked by popularity/common use in each file.  I combined the two files together using the popularity to assign gender as a proxy for "most likely".
+   What I found after doing this is that the data still had 25% null rate.  Foreign names such as "Stefan" did not show up in the US census files.   
+   2)In years 2011-2015, the results contained a genderRank.  I aligned the data by genderRank assuming the fastest finisher was most likely a male.  I used this logic to create a second name file to capture more foreign names.
+   
+   Applied logic across all results as follows:
+   1.  Assigned a gender to a named person based upon their results in 2011-2015.  If John Doe raced in any of those years, a gender was assigned to him across all years.
+   2.  Applied Ironman firstname assigning gender to all records based upon the 2011-2015 results.
+   3.  Applied Census firstname assigning gender to remaining records.  Resulted in a 93.72% population rate.
+   
+
++--------+------+
+|count(1)|gender|
++--------+------+
+|    1568|  null|
+|    6471|Female|
+|   16949|  Male|
++--------+------+
+
+
+
+   Who completed the most Iroman's and what years?  Limited to the top three.
++----------+--------------------+------+--------------------+--------------------+
+|totalraces|                name|gender|           raceyears|           divisions|
++----------+--------------------+------+--------------------+--------------------+
+|        14|           John Hill|  Male|[2003, 2004, 2005...|[45-49, 45-49, 45...|
+|        13|        Kenneth Glah|  Male|[2003, 2004, 2005...|[PRO, PRO, PRO, P...|
+|        13|Reinhold Garnitsc...|  Male|[2003, 2004, 2005...|[45-49, 45-49, 45...|
+|        13|       Geoff Thorsen|  Male|[2003, 2004, 2005...|[55-59, 60-64, 60...|
+|        12|       Laura Sophiea|Female|[2003, 2005, 2006...|[45-49, 50-54, 50...|
++----------+--------------------+------+--------------------+-------------------
+   
+   
+   2013 was a fast year.  Did transition times impact a participant's podium position (top 5 in division/age group)?
+   Included name, finishtime, actual division rank, and adjusted divison rank they "could have" received if they'd had faster transitions.
+   (Based on raw swim, bike, run splits).  
+   
+   This required converting the times (t1, t2, and overall) from strings to seconds for the calculations and back to hh:mm.ss for display.
+ +--------------------+------+--------+--------+----------+-------+----------+
+|                name|gender|division| overall|adjoverall|divRank|adjdivRank|
++--------------------+------+--------+--------+----------+-------+----------+
+|   Henrich Kolkhorst|  Male|   18-24|09:18:01|  09:09:53|      4|         3|
+|       Michael Ruenz|  Male|   25-29|08:55:17|  08:46:04|      4|         3|
+|Gregers Rye Chris...|  Male|   25-29|09:05:42|  08:55:13|      8|         5|
+|Niels Brandt-Jørg...|  Male|   30-34|08:55:13|  08:47:49|      5|         3|
+|     Richard Stoffel|  Male|   45-49|09:19:01|  09:10:45|      6|         5|
+|        Jan Blokland|  Male|   50-54|09:24:48|  09:16:54|      3|         2|
+|         Mark Newman|  Male|   50-54|09:34:08|  09:26:13|      5|         4|
+|           Aart Wijk|  Male|   55-59|09:51:33|  09:42:10|      3|         2|
+|       Markus Jochum|  Male|   60-64|10:40:13|  10:31:16|      3|         2|
+|      Gustav Förster|  Male|   60-64|10:43:58|  10:34:08|      5|         4|
+|        Marge Burley|Female|   65-69|13:41:31|  13:29:12|      5|         4|
+|Joseph Vanhorn Va...|  Male|   75-79|16:23:10|  15:59:38|      4|         3|
+|       Tim O'Donnell|  Male|     PRO|08:22:25|  08:17:48|      5|         4|
++--------------------+------+--------+--------+----------+-------+----------+
+
+
+   
+Do weather conditions impact the top finisher's times of each division year over year or are they consistently the same? 
+In 2013, it was apparent the weather conditions were extremely favorable as compared to other years.
+2013 had a large dip in times which bumped back up in 2014 and 2015 to results comparable to 2012.
+
++----+--------+------+--------+--------+--------+--------------+
+|year|division|gender| fastest| slowest| Top5Avg|percent_change|
++----+--------+------+--------+--------+--------+--------------+
+|2012|   30-34|Female|09:53:50|10:17:59|10:04:23|          null|
+|2013|   30-34|Female|09:40:15|09:49:28|09:45:31|         -3.12|
+|2014|   30-34|Female|09:53:23|10:16:13|10:06:14|          3.54|
+|2015|   30-34|Female|09:51:10|10:25:49|10:09:18|          0.51|
+|2012|   25-29|Female|09:51:07|10:22:38|10:03:32|          null|
+|2013|   25-29|Female|09:15:16|09:57:20|09:46:35|         -2.81|
+|2014|   25-29|Female|09:50:39|10:23:43|10:10:29|          4.07|
+|2015|   25-29|Female|09:56:21|10:22:24|10:11:31|          0.17|
+|2012|   30-34|  Male|09:09:02|09:17:18|09:13:25|          null|
+|2013|   30-34|  Male|08:37:26|08:55:13|08:50:06|         -4.21|
+|2014|   30-34|  Male|09:03:37|09:14:50|09:09:30|          3.66|
+|2015|   30-34|  Male|09:00:02|09:10:30|09:06:17|         -0.59|
+|2012|   25-29|  Male|09:08:43|09:16:19|09:13:34|          null|
+|2013|   25-29|  Male|08:47:36|09:03:36|08:53:58|         -3.54|
+|2014|   25-29|  Male|08:52:14|09:09:48|09:04:36|          1.99|
+|2015|   25-29|  Male|08:53:40|09:18:02|09:09:53|          0.97|
++----+--------+------+--------+--------+--------+--------------+
+
+
+   
+   
+   
+   
+   
+   
+   
