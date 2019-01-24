@@ -1,2 +1,2 @@
 # Scala-Hive-Pig-Misc
-Miscellanous coding projects/samples
+Miscellaneous coding projects/samples
